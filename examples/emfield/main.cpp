@@ -9,18 +9,18 @@ void create(context &ctx) {
     ctx.imge("data1", 1024, 1024, RGBA16F);
 
     // Compute shaders: c0 = H-update, c1 = E-update + source
-    ctx.prog("c0", COMP, "../res/sdr/c0.comp");
-    ctx.prog("c1", COMP, "../res/sdr/c1.comp");
+    ctx.prog("c0", COMP, "res/sdr/c0.comp");
+    ctx.prog("c1", COMP, "res/sdr/c1.comp");
 
     // Init shader: zero textures + seed a centre pulse
-    ctx.prog("init", COMP, "../res/sdr/init.comp");
+    ctx.prog("init", COMP, "res/sdr/init.comp");
     ctx.useImge("data0", 0, WRITE);
     ctx.useImge("data1", 1, WRITE);
     ctx.useComp("init", 64, 64, 1);
 
     // Render pipeline: full-screen quad
-    ctx.prog("dv", VERT, "../res/sdr/dv.vert");
-    ctx.prog("df", FRAG, "../res/sdr/df.frag");
+    ctx.prog("dv", VERT, "res/sdr/dv.vert");
+    ctx.prog("df", FRAG, "res/sdr/df.frag");
     ctx.pipe("d", "dv", "df");
 }
 

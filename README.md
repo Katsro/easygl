@@ -2,20 +2,41 @@
 
 **Single-header C++20 helper for compute-shader driven real-time simulation.**
 
-Drop `easygl.h` into your project, link GLFW + glad (OpenGL 4.6) + GLM, and write a
-`create` / `update` pair.  No boilerplate.
+Drop `easygl.h` into your project, link GLFW + glad, and write a `create`/`update` pair. No boilerplate. GLM is optional.
 
 ## Features
 
-- **`start()`** — one call sets up a GLFW window + GL context, enters the main loop.
-- **`context`** — named resource registry (textures, buffers, programs, pipelines).
-- **Compute shaders** — `useComp()` dispatches with automatic `glMemoryBarrier`.
-- **Separable programs** — `glCreateShaderProgramv` + program pipelines.
-- **Indirect dispatch/draw** — compute and vertex by GPU-written buffer.
-- **Uniform setters** — template specializations for `int`, `float`, `vec2`–`vec4`,
-  `ivec2`–`ivec4`, `mat4`, `std::initializer_list`.
+- **`start()`** — one call sets up a GLFW window + GL 4.6 context, enters the main loop
+- **`context`** — named resource registry (textures, buffers, programs, pipelines)
+- **Compute shaders** — `useComp()` dispatches with automatic `glMemoryBarrier`
+- **Separable programs** — `glCreateShaderProgramv` + program pipelines
+- **Indirect dispatch/draw** — GPU-driven via shader storage buffers
+- **Uniform setters** — scalar-expanded overloads for `int`, `float`, `vec2`–`vec4`-like args, `mat4` via pointer; optionally GLM types
 
-## Quick example
+## Quick start — FetchContent (CMake)
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(easygl
+    GIT_REPOSITORY https://github.com/Katsro/easygl.git
+    GIT_TAG        v0.2
+)
+FetchContent_MakeAvailable(easygl)
+
+target_link_libraries(myapp PRIVATE easygl::easygl)
+```
+
+GLFW 3.4 and glad (OpenGL 4.6) are fetched automatically.
+
+### With GLM support
+
+```cmake
+set(EASYGL_USE_GLM ON CACHE BOOL "")
+FetchContent_MakeAvailable(easygl)
+# → glm::vec2/3/4, ivec2/3/4, mat4 uniform() overloads enabled
+```
+
+## Minimal example
 
 ```cpp
 #include <easygl.h>
@@ -31,9 +52,8 @@ void create(context &ctx) {
 
 void update(context &ctx) {
     ctx.useImge("tex", 0, READ);
-    ctx.useImge("tex", 1, WRITE);           // ping-pong on the same texture
     ctx.uniform("cs", "dt", 0.016f);
-    ctx.useComp("cs", 64, 64, 1);           // 1024² with 16×16 workgroups
+    ctx.useComp("cs", 64, 64, 1);
     ctx.useDraw("pipe", STRIP, 0, 4, 1);
 }
 
@@ -44,31 +64,27 @@ auto main() -> int {
 
 ## Example — EM field simulation
 
-`src/main.cpp` + `res/sdr/*.comp` + `res/sdr/*.frag` implement a
-**2D FDTD electromagnetic field simulation** with mouse interaction:
+`examples/emfield/` implements a **2D FDTD electromagnetic field simulation**:
 
 - `.r` = Ez (electric) → warm red/green
 - `.b`/`.a` = Hx/Hy (magnetic) → cool blue/cyan
-- Hold **left mouse button** to inject an oscillating EM source.
+- Hold **left mouse button** to inject an oscillating EM source
+
+Build it:
+```bash
+cmake -B build -DEASYGL_BUILD_EXAMPLES=ON
+cmake --build build
+./build/examples/emfield/emfield   # or emfield.exe on Windows
+```
 
 ## Dependencies
 
-| Library | Role                       |
-|---------|----------------------------|
-| GLFW    | Window + input + GL context |
-| glad    | GL 4.6 core loader         |
-| GLM     | Maths (`glm::vec*`, `mat4`) |
-
-They are automatically fetched by the CMake build (FetchContent).
-
-## Build
-
-```bash
-cmake -B build
-cmake --build build
-./build/main
-```
+| Library | Role                        | Auto-fetched? |
+|---------|-----------------------------|:---:|
+| GLFW    | Window + input + GL context | ✓  |
+| glad    | GL 4.6 core loader          | ✓  |
+| GLM     | Maths (optional)            | opt-in |
 
 ## License
 
-MIT — do whatever you want.
+MIT

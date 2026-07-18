@@ -1,6 +1,6 @@
 build/
-.reasonix/
 *.exe
 .idea/
 .vscode/
+.reasonix/
 reasonix.toml

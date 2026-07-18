@@ -55,7 +55,7 @@ public:
     void imge(const str &name, GLsizei w, GLsizei h, GLenum type) {
         auto &[id,ty] = imges[name] = {0, type};
         glGenTextures(1, &id);
-        glBindTexture(GL_TEXTURE_2D,id);
+        glBindTexture(GL_TEXTURE_2D, id);
         glTexStorage2D(GL_TEXTURE_2D, 1, ty, w, h);
     }
 
@@ -154,11 +154,17 @@ public:
 
     // -- scalar-expanded overloads (no GLM required) --
     void uniform(const str &prog, const str &name, float x, float y) noexcept;
+
     void uniform(const str &prog, const str &name, float x, float y, float z) noexcept;
+
     void uniform(const str &prog, const str &name, float x, float y, float z, float w) noexcept;
+
     void uniform(const str &prog, const str &name, int x, int y) noexcept;
+
     void uniform(const str &prog, const str &name, int x, int y, int z) noexcept;
+
     void uniform(const str &prog, const str &name, int x, int y, int z, int w) noexcept;
+
     void uniform(const str &prog, const str &name, const float *m) noexcept;
 
     context() noexcept = default;
@@ -291,3 +297,59 @@ inline void easygl::context::uniform(const str &prog, const str &name, std::init
     const auto loc = glGetUniformLocation(id, name.c_str());
     glProgramUniform1uiv(id, loc, static_cast<GLsizei>(data.size()), data.begin());
 }
+
+// ── Optional GLM support ──
+// Define EASYGL_HAVE_GLM (or set -DEASYGL_USE_GLM=ON in CMake) to
+// re-enable glm::vec2/3/4, glm::ivec2/3/4, and glm::mat4 overloads.
+#ifdef EASYGL_HAVE_GLM
+#include <glm/glm.hpp>
+
+template<>
+inline void easygl::context::uniform(const str &prog, const str &name, glm::vec2 data) noexcept {
+    const auto [id,ty] = progs[prog];
+    const auto loc = glGetUniformLocation(id, name.c_str());
+    glProgramUniform2f(id, loc, data.x, data.y);
+}
+
+template<>
+inline void easygl::context::uniform(const str &prog, const str &name, glm::vec3 data) noexcept {
+    const auto [id,ty] = progs[prog];
+    const auto loc = glGetUniformLocation(id, name.c_str());
+    glProgramUniform3f(id, loc, data.x, data.y, data.z);
+}
+
+template<>
+inline void easygl::context::uniform(const str &prog, const str &name, glm::vec4 data) noexcept {
+    const auto [id,ty] = progs[prog];
+    const auto loc = glGetUniformLocation(id, name.c_str());
+    glProgramUniform4f(id, loc, data.x, data.y, data.z, data.w);
+}
+
+template<>
+inline void easygl::context::uniform(const str &prog, const str &name, glm::ivec2 data) noexcept {
+    const auto [id,ty] = progs[prog];
+    const auto loc = glGetUniformLocation(id, name.c_str());
+    glProgramUniform2i(id, loc, data.x, data.y);
+}
+
+template<>
+inline void easygl::context::uniform(const str &prog, const str &name, glm::ivec3 data) noexcept {
+    const auto [id,ty] = progs[prog];
+    const auto loc = glGetUniformLocation(id, name.c_str());
+    glProgramUniform3i(id, loc, data.x, data.y, data.z);
+}
+
+template<>
+inline void easygl::context::uniform(const str &prog, const str &name, glm::ivec4 data) noexcept {
+    const auto [id,ty] = progs[prog];
+    const auto loc = glGetUniformLocation(id, name.c_str());
+    glProgramUniform4i(id, loc, data.x, data.y, data.z, data.w);
+}
+
+template<>
+inline void easygl::context::uniform(const str &prog, const str &name, glm::mat4 data) noexcept {
+    const auto [id,ty] = progs[prog];
+    const auto loc = glGetUniformLocation(id, name.c_str());
+    glProgramUniformMatrix4fv(id, loc, 1, false, &data[0][0]);
+}
+#endif
