@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <cmath>
 #include <string>
 #include <unordered_map>
 
@@ -151,6 +152,15 @@ public:
     template<typename T>
     void uniform(const str &prog, const str &name, T data) noexcept = delete;
 
+    // -- scalar-expanded overloads (no GLM required) --
+    void uniform(const str &prog, const str &name, float x, float y) noexcept;
+    void uniform(const str &prog, const str &name, float x, float y, float z) noexcept;
+    void uniform(const str &prog, const str &name, float x, float y, float z, float w) noexcept;
+    void uniform(const str &prog, const str &name, int x, int y) noexcept;
+    void uniform(const str &prog, const str &name, int x, int y, int z) noexcept;
+    void uniform(const str &prog, const str &name, int x, int y, int z, int w) noexcept;
+    void uniform(const str &prog, const str &name, const float *m) noexcept;
+
     context() noexcept = default;
 
     ~context() noexcept = default;
@@ -195,9 +205,6 @@ inline void easygl::start(const str &name, cxtcall create, cxtcall update, bool 
     glfwTerminate();
 }
 
-
-#include <glm/glm.hpp>
-
 template<>
 inline void easygl::context::uniform(const str &prog, const str &name, int data) noexcept {
     const auto [id,ty] = progs[prog];
@@ -219,53 +226,49 @@ inline void easygl::context::uniform(const str &prog, const str &name, GLuint da
     glProgramUniform1ui(id, loc, data);
 }
 
-template<>
-inline void easygl::context::uniform(const str &prog, const str &name, glm::vec2 data) noexcept {
+// -- scalar-expanded vec / mat4 overloads (no GLM dependency) --
+
+inline void easygl::context::uniform(const str &prog, const str &name,
+                                     float x, float y) noexcept {
     const auto [id,ty] = progs[prog];
-    const auto loc = glGetUniformLocation(id, name.c_str());
-    glProgramUniform2f(id, loc, data.x, data.y);
+    glProgramUniform2f(id, glGetUniformLocation(id, name.c_str()), x, y);
 }
 
-template<>
-inline void easygl::context::uniform(const str &prog, const str &name, glm::vec3 data) noexcept {
+inline void easygl::context::uniform(const str &prog, const str &name,
+                                     float x, float y, float z) noexcept {
     const auto [id,ty] = progs[prog];
-    const auto loc = glGetUniformLocation(id, name.c_str());
-    glProgramUniform3f(id, loc, data.x, data.y, data.z);
+    glProgramUniform3f(id, glGetUniformLocation(id, name.c_str()), x, y, z);
 }
 
-template<>
-inline void easygl::context::uniform(const str &prog, const str &name, glm::vec4 data) noexcept {
+inline void easygl::context::uniform(const str &prog, const str &name,
+                                     float x, float y, float z, float w) noexcept {
     const auto [id,ty] = progs[prog];
-    const auto loc = glGetUniformLocation(id, name.c_str());
-    glProgramUniform4f(id, loc, data.x, data.y, data.z, data.w);
+    glProgramUniform4f(id, glGetUniformLocation(id, name.c_str()), x, y, z, w);
 }
 
-template<>
-inline void easygl::context::uniform(const str &prog, const str &name, glm::ivec2 data) noexcept {
+inline void easygl::context::uniform(const str &prog, const str &name,
+                                     int x, int y) noexcept {
     const auto [id,ty] = progs[prog];
-    const auto loc = glGetUniformLocation(id, name.c_str());
-    glProgramUniform2i(id, loc, data.x, data.y);
+    glProgramUniform2i(id, glGetUniformLocation(id, name.c_str()), x, y);
 }
 
-template<>
-inline void easygl::context::uniform(const str &prog, const str &name, glm::ivec3 data) noexcept {
+inline void easygl::context::uniform(const str &prog, const str &name,
+                                     int x, int y, int z) noexcept {
     const auto [id,ty] = progs[prog];
-    const auto loc = glGetUniformLocation(id, name.c_str());
-    glProgramUniform3i(id, loc, data.x, data.y, data.z);
+    glProgramUniform3i(id, glGetUniformLocation(id, name.c_str()), x, y, z);
 }
 
-template<>
-inline void easygl::context::uniform(const str &prog, const str &name, glm::ivec4 data) noexcept {
+inline void easygl::context::uniform(const str &prog, const str &name,
+                                     int x, int y, int z, int w) noexcept {
     const auto [id,ty] = progs[prog];
-    const auto loc = glGetUniformLocation(id, name.c_str());
-    glProgramUniform4i(id, loc, data.x, data.y, data.z, data.w);
+    glProgramUniform4i(id, glGetUniformLocation(id, name.c_str()), x, y, z, w);
 }
 
-template<>
-inline void easygl::context::uniform(const str &prog, const str &name, glm::mat4 data) noexcept {
+inline void easygl::context::uniform(const str &prog, const str &name,
+                                     const float *m) noexcept {
     const auto [id,ty] = progs[prog];
-    const auto loc = glGetUniformLocation(id, name.c_str());
-    glProgramUniformMatrix4fv(id, loc, 1, false, &data[0][0]);
+    glProgramUniformMatrix4fv(id, glGetUniformLocation(id, name.c_str()),
+                              1, false, m);
 }
 
 template<>

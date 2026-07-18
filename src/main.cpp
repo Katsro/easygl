@@ -1,5 +1,4 @@
 #include <easygl.h>
-#include <glm/glm.hpp>
 
 using namespace easygl;
 
@@ -44,7 +43,7 @@ void update(context &ctx) {
             double mx, my;
             glfwGetCursorPos(ctx.window, &mx, &my);
             // Flip Y: GLFW y=0 is top, texture y=0 is bottom
-            ctx.uniform("c1", "srcPos", glm::ivec2(int(mx), 1024 - int(my)));
+            ctx.uniform("c1", "srcPos", int(mx), 1024 - int(my));
             // Oscillating source: sine wave at ~3 Hz
             ctx.uniform("c1", "srcVal", float(std::sin(t * 18.85) * 2.0));
             ctx.uniform("c1", "srcActive", 1.0f);
