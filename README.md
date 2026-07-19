@@ -4,6 +4,8 @@
 
 Drop `easygl.h` into your project, link GLFW + glad, and write a `create`/`update` pair. No boilerplate. GLM is optional.
 
+完整 API 文档见 [USAGE.md](USAGE.md)。
+
 ## Features
 
 - **`start()`** — one call sets up a GLFW window + GL 4.6 context, enters the main loop
