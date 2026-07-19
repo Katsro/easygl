@@ -1,0 +1,22 @@
+#version 460 core
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout (binding = 0, rgba16f) uniform readonly image2D data0;
+layout (binding = 1, rgba16f) uniform writeonly image2D data1;
+
+// c0: H-field FDTD update — curl(E) → Hx, Hy
+// .r = Ez (electric), .b = Hx, .a = Hy (magnetic)
+
+void main() {
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    vec4 v = imageLoad(data0, p);
+
+    float EzU = imageLoad(data0, (p + ivec2(0, 1)) & 1023).r;
+    float EzD = imageLoad(data0, (p + ivec2(0, 1023)) & 1023).r;
+    float EzR = imageLoad(data0, (p + ivec2(1, 0)) & 1023).r;
+    float EzL = imageLoad(data0, (p + ivec2(1023, 0)) & 1023).r;
+
+    float Hx = v.b - 0.5 * (EzU - EzD) * 0.5;
+    float Hy = v.a + 0.5 * (EzR - EzL) * 0.5;
+
+    imageStore(data1, p, vec4(v.r, 0.0, Hx, Hy));
+}

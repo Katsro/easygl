@@ -11,12 +11,27 @@ Drop `easygl.h` into your project, link GLFW + glad, and write a `create`/`updat
 - **Compute shaders** — `useComp()` dispatches with automatic `glMemoryBarrier`
 - **Separable programs** — `glCreateShaderProgramv` + program pipelines
 - **Indirect dispatch/draw** — GPU-driven via shader storage buffers
-- **Uniform setters** — scalar-expanded overloads for `int`, `float`, `vec2`–`vec4`-like args, `mat4` via pointer; optionally GLM types
+- **Uniform setters** — scalar-expanded overloads; optionally GLM types
+- **`progSrc()`** — compile GLSL from a string literal, no external files needed
 
-## Quick start — FetchContent (CMake)
+## Quick start — FetchContent
+
+**easygl is a header-only interface target. It does NOT fetch GLFW or glad for you.** Provide them first:
 
 ```cmake
 include(FetchContent)
+
+# 1. Provide GLFW + glad (one-time, re-used across your project)
+FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 3.4)
+set(GLFW_BUILD_EXAMPLES OFF)
+FetchContent_MakeAvailable(glfw)
+
+FetchContent_Declare(glad-src GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+                     GIT_TAG v2.0.8 SOURCE_SUBDIR cmake)
+FetchContent_MakeAvailable(glad-src)
+glad_add_library(glad STATIC API gl:core=4.6)
+
+# 2. Fetch easygl (instant — no deps compiled here)
 FetchContent_Declare(easygl
     GIT_REPOSITORY https://github.com/Katsro/easygl.git
     GIT_TAG        v0.2
@@ -26,14 +41,13 @@ FetchContent_MakeAvailable(easygl)
 target_link_libraries(myapp PRIVATE easygl::easygl)
 ```
 
-GLFW 3.4 and glad (OpenGL 4.6) are fetched automatically.
+GLFW + glad are compiled **once** regardless of how many targets link to easygl.
 
 ### With GLM support
 
 ```cmake
 set(EASYGL_USE_GLM ON CACHE BOOL "")
-FetchContent_MakeAvailable(easygl)
-# → glm::vec2/3/4, ivec2/3/4, mat4 uniform() overloads enabled
+# glm::vec2/3/4, ivec2/3/4, mat4 uniform() overloads enabled
 ```
 
 ## Minimal example
@@ -44,46 +58,40 @@ using namespace easygl;
 
 void create(context &ctx) {
     ctx.imge("tex", 1024, 1024, RGBA16F);
-    ctx.prog("cs", COMP, "my.comp");
-    ctx.prog("vs", VERT, "quad.vert");
-    ctx.prog("fs", FRAG, "shade.frag");
-    ctx.pipe("pipe", "vs", "fs");
+    ctx.progSrc("cs", COMP, R"(#version 460 core ... shader source ...)");
 }
 
 void update(context &ctx) {
     ctx.useImge("tex", 0, READ);
     ctx.uniform("cs", "dt", 0.016f);
     ctx.useComp("cs", 64, 64, 1);
-    ctx.useDraw("pipe", STRIP, 0, 4, 1);
 }
 
-auto main() -> int {
-    start("demo", create, update);
-}
+auto main() -> int { start("demo", create, update); }
 ```
 
 ## Example — EM field simulation
 
-`examples/emfield/` implements a **2D FDTD electromagnetic field simulation**:
+`examples/` — 2D FDTD electromagnetic field simulation with mouse interaction.
 
-- `.r` = Ez (electric) → warm red/green
-- `.b`/`.a` = Hx/Hy (magnetic) → cool blue/cyan
-- Hold **left mouse button** to inject an oscillating EM source
-
-Build it:
+Build:
 ```bash
 cmake -B build -DEASYGL_BUILD_EXAMPLES=ON
 cmake --build build
-./build/examples/emfield/emfield   # or emfield.exe on Windows
+./build/examples/emfield       # or emfield.exe on Windows
 ```
+
+- `.r` = Ez (electric) → warm red/green
+- `.b`/`.a` = Hx/Hy (magnetic) → cool blue/cyan
+- Hold left mouse button to inject oscillating EM source
 
 ## Dependencies
 
-| Library | Role                        | Auto-fetched? |
-|---------|-----------------------------|:---:|
-| GLFW    | Window + input + GL context | ✓  |
-| glad    | GL 4.6 core loader          | ✓  |
-| GLM     | Maths (optional)            | opt-in |
+| Library | Role                        | Provided by |
+|---------|-----------------------------|-------------|
+| GLFW    | Window + input + GL context | **You**     |
+| glad    | GL 4.6 core loader          | **You**     |
+| GLM     | Maths (optional)            | opt-in      |
 
 ## License
 

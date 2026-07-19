@@ -1,0 +1,13 @@
+#version 460 core
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout (binding = 0, rgba16f) uniform writeonly image2D data0;
+layout (binding = 1, rgba16f) uniform writeonly image2D data1;
+
+// init: zero textures + seed a central Ez pulse so the sim starts visible
+
+void main() {
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    float d = length(vec2(p - ivec2(512)));
+    imageStore(data0, p, vec4(exp(-d * d / 400.0) * 0.5, 0.0, 0.0, 0.0));
+    imageStore(data1, p, vec4(0.0));
+}

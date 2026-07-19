@@ -29,7 +29,6 @@ namespace easygl {
     constexpr auto STRIP = GL_TRIANGLE_STRIP;
 
     using str = std::string;
-    using namespace std::filesystem;
     using cxtcall = void(&)(context &cxt);
 
     float time();
@@ -65,12 +64,27 @@ public:
         glBufferData(ty, size, nullptr, GL_DYNAMIC_DRAW);
     }
 
-    void prog(const str &name, GLenum type, const path &file) {
-        auto &[id,ty] = progs[name] = {0, type};
-        const auto size = file_size(file);
+    void prog(const str &name, GLenum type, const std::filesystem::path &file) {
+        // ① try the path as-is
+        std::filesystem::path resolved = file;
+        if (!std::filesystem::exists(resolved)) {
+            // ② fallback: prepend EASYGL_ROOT (CMake preset macro)
+#ifdef EASYGL_ROOT
+            std::filesystem::path alt = std::filesystem::path(EASYGL_ROOT) / file;
+            if (std::filesystem::exists(alt)) resolved = alt;
+#endif
+        }
+
+        const auto size = std::filesystem::file_size(resolved);
         std::string buf(size, '\0');
-        std::ifstream(file).read(buf.data(), static_cast<long long>(size));
-        const GLchar *src = buf.data();
+        std::ifstream(resolved).read(buf.data(), static_cast<long long>(size));
+        progSrc(name, type, buf);
+    }
+
+    // Like prog() but takes GLSL source directly — no file needed.
+    void progSrc(const str &name, GLenum type, const str &source) {
+        auto &[id,ty] = progs[name] = {0, type};
+        const GLchar *src = source.data();
         id = glCreateShaderProgramv(ty, 1, &src);
         GLint done = GL_FALSE;
         glGetProgramiv(id, GL_LINK_STATUS, &done);
@@ -120,8 +134,7 @@ public:
         auto &[id,ty] = progs[name];
         glUseProgram(id);
         glDispatchCompute(x, y, z);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }
 
     void useDraw(const str &name, GLenum mode, GLint fv, GLsizei vc, GLsizei ic) {
@@ -137,8 +150,7 @@ public:
         glUseProgram(id);
         glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, bf);
         glDispatchComputeIndirect(0);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }
 
     void indDraw(const str &name, GLenum mode, const str &buff) {
@@ -166,10 +178,6 @@ public:
     void uniform(const str &prog, const str &name, int x, int y, int z, int w) noexcept;
 
     void uniform(const str &prog, const str &name, const float *m) noexcept;
-
-    context() noexcept = default;
-
-    ~context() noexcept = default;
 };
 
 inline void easygl::start(const str &name, cxtcall create, cxtcall update, bool full, int w, int h) {

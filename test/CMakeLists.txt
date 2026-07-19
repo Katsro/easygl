@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(easygl-test LANGUAGES CXX C)
+
 include(FetchContent)
 
 # ── GLFW ──
@@ -22,19 +25,12 @@ FetchContent_Declare(glad-src
 FetchContent_MakeAvailable(glad-src)
 glad_add_library(glad STATIC API gl:core=4.6)
 
-# GLM
-if(EASYGL_USE_GLM)
-    FetchContent_Declare(glm
-        GIT_REPOSITORY https://github.com/g-truc/glm.git
-        GIT_TAG 1.0.1
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(glm)
-    target_link_libraries(easygl INTERFACE glm::glm)
-    target_compile_definitions(easygl INTERFACE EASYGL_HAVE_GLM)
-endif()
+# ── easygl (local working tree) ──
+FetchContent_Declare(easygl
+    SOURCE_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
+FetchContent_MakeAvailable(easygl)
 
-add_executable(emfield main.cpp)
-target_link_libraries(emfield PRIVATE easygl::easygl)
-target_compile_definitions(emfield PRIVATE
-    EASYGL_ROOT="${CMAKE_PROJECT_PATH}")
+# ── test ──
+add_executable(easygl-test main.cpp)
+target_link_libraries(easygl-test PRIVATE easygl::easygl)
