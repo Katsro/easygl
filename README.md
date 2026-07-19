@@ -34,7 +34,7 @@ glad_add_library(glad STATIC API gl:core=4.6)
 # 2. Fetch easygl (instant — no deps compiled here)
 FetchContent_Declare(easygl
     GIT_REPOSITORY https://github.com/Katsro/easygl.git
-    GIT_TAG        v0.2
+    GIT_TAG        v0.3
 )
 FetchContent_MakeAvailable(easygl)
 
@@ -76,10 +76,11 @@ auto main() -> int { start("demo", create, update); }
 
 Build:
 ```bash
-cmake -B build -DEASYGL_BUILD_EXAMPLES=ON
+cmake -B build -G "MinGW Makefiles" -DEASYGL_BUILD_EXAMPLES=ON
 cmake --build build
 ./build/examples/emfield       # or emfield.exe on Windows
 ```
+> 根据你的工具链调整 generator（Linux/macOS 默认即可，VS 用户用 `-G "Visual Studio 17 2022"`）。
 
 - `.r` = Ez (electric) → warm red/green
 - `.b`/`.a` = Hx/Hy (magnetic) → cool blue/cyan
